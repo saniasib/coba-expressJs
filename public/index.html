@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express.js Dashboard</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #10b981;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #9ca3af;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            color: var(--dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 0.5rem;
+        }
+        
+        .status-badge {
+            background-color: var(--secondary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .status-badge .dot {
+            height: 0.75rem;
+            width: 0.75rem;
+            background-color: white;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        main {
+            margin-top: 2rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-weight: 500;
+        }
+        
+        .db-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background-color: #f8fafc;
+            border-radius: 0.375rem;
+            border-left: 4px solid var(--secondary);
+        }
+        
+        .db-status.error {
+            border-left-color: #ef4444;
+        }
+        
+        .db-status-text {
+            font-weight: 500;
+        }
+        
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .logs {
+            background-color: var(--dark);
+            color: var(--light);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-family: 'Courier New', monospace;
+            height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        
+        .log-time {
+            color: var(--gray);
+            margin-right: 0.5rem;
+        }
+        
+        .log-level-info {
+            color: #3b82f6;
+        }
+        
+        .log-level-success {
+            color: var(--secondary);
+        }
+        
+        .log-level-error {
+            color: #ef4444;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+        
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .status-badge {
+                margin-top: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i>⚡</i> Express.js Dashboard
+                </div>
+                <div class="status-badge">
+                    <span class="dot"></span>
+                    <span id="server-status">Server Online</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <div class="card">
+            <div class="card-title">Server Statistics</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="uptime">00:00:00</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="memory-usage">0 MB</div>
+                    <div class="stat-label">Memory Usage</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="request-count">0</div>
+                    <div class="stat-label">Requests Handled</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="response-time">0 ms</div>
+                    <div class="stat-label">Avg. Response Time</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Database Connection</div>
+            <div class="db-status" id="db-status-container">
+                <div class="db-status-text" id="db-status-text">Connected to database successfully</div>
+                <button class="btn" id="refresh-db">Refresh Connection</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Server Logs</div>
+            <div class="logs" id="server-logs">
+                <div class="log-entry">
+                    <span class="log-time">[13:45:22]</span>
+                    <span class="log-level-info">[INFO]</span>
+                    <span>Server started on port 3000</span>
+                </div>
+                <div class="log-entry">
+                    <span class="log-time">[13:45:23]</span>
+                    <span class="log-level-success">[SUCCESS]</span>
+                    <span>Database connected successfully</span>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="container">
+        <p>Express.js Dashboard © 2025 | Running on Node.js</p>
+    </footer>
+    
+    <script>
+        // Mock data for demonstration
+        let requestCount = 0;
+        let startTime = new Date();
+        
+        function updateStats() {
+            // Update uptime
+            const currentTime = new Date();
+            const uptimeDiff = Math.floor((currentTime - startTime) / 1000);
+            const hours = Math.floor(uptimeDiff / 3600).toString().padStart(2, '0');
+            const minutes = Math.floor((uptimeDiff % 3600) / 60).toString().padStart(2, '0');
+            const seconds = Math.floor(uptimeDiff % 60).toString().padStart(2, '0');
+            document.getElementById('uptime').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Update memory usage
+            const memoryUsage = Math.floor(Math.random() * 200) + 50;
+            document.getElementById('memory-usage').textContent = `${memoryUsage} MB`;
+            
+            // Update request count
+            requestCount += Math.floor(Math.random() * 3);
+            document.getElementById('request-count').textContent = requestCount;
+            
+            // Update response time
+            const responseTime = Math.floor(Math.random() * 100) + 10;
+            document.getElementById('response-time').textContent = `${responseTime} ms`;
+            
+            // Randomly add log entries
+            if (Math.random() > 0.7) {
+                addLogEntry();
+            }
+        }
+        
+        function addLogEntry() {
+            const logs = document.getElementById('server-logs');
+            const now = new Date();
+            const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+            
+            const logTypes = [
+                { level: 'info', text: 'Handled GET request to /' },
+                { level: 'info', text: 'Processed user authentication' },
+                { level: 'success', text: 'Successfully retrieved data from database' },
+                { level: 'info', text: 'API endpoint called with valid parameters' },
+                { level: 'error', text: 'Failed to process request: Timeout' }
+            ];
+            
+            const randomLog = logTypes[Math.floor(Math.random() * logTypes.length)];
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-time">${timeString}</span>
+                <span class="log-level-${randomLog.level}">[${randomLog.level.toUpperCase()}]</span>
+                <span>${randomLog.text}</span>
+            `;
+            
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        // Simulate DB status change
+        document.getElementById('refresh-db').addEventListener('click', function() {
+            const dbStatusContainer = document.getElementById('db-status-container');
+            const dbStatusText = document.getElementById('db-status-text');
+            
+            // Show loading state
+            this.textContent = 'Connecting...';
+            dbStatusText.textContent = 'Checking connection...';
+            
+            setTimeout(() => {
+                const isConnected = Math.random() > 0.3;
+                
+                if (isConnected) {
+                    dbStatusContainer.className = 'db-status';
+                    dbStatusText.textContent = 'Connected to database successfully';
+                    
+                    // Add log entry
+                    const logs = document.getElementById('server-logs');
+                    const now = new Date();
+                    const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+                    
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.innerHTML = `
+                        <span class="log-time">${timeString}</span>
+                        <span class="log-level-success">[SUCCESS]</span>
+                        <span>Database connection refreshed successfully</span>
+                    `;
+                    
+                    logs.appendChild(logEntry);
+                    logs.scrollTop = logs.scrollHeight;
+                } else {
+                    dbStatusContainer.className = 'db-status error';
+                    dbStatusText.textContent = 'Failed to connect to database';
+                    
+                    // Add log entry
+                    const logs = document.getElementById('server-logs');
+                    const now = new Date();
+                    const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+                    
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    logEntry.innerHTML = `
+                        <span class="log-time">${timeString}</span>
+                        <span class="log-level-error">[ERROR]</span>
+                        <span>Database connection failed: Connection refused</span>
+                    `;
+                    
+                    logs.appendChild(logEntry);
+                    logs.scrollTop = logs.scrollHeight;
+                }
+                
+                this.textContent = 'Refresh Connection';
+            }, 1500);
+        });
+        
+        // Update stats periodically
+        setInterval(updateStats, 1000);
+        
+        // Initialize
+        updateStats();
+    </script>
+</body>
+</html>
